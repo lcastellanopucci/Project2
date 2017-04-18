@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        
+        <script src="https://d3js.org/d3.v4.min.js"></script>
+       <title>Project 2</title>
+        <meta charset="utf-8">
+        
+    </head>
+
+    <body>
+        <script>
+            
+            var height = 700;
+            var width = 700;
+            var margin = {top: 20, right: 20, bottom: 110, left: 50};
+            
+            var svg = d3.select("body").append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom);
+            
+            var P = [];
+            var C = [];
+            var I = [];
+            
+            var merged = [];
+            
+            var imageRef = [{ name: "AppleBees", logo: "http://www.horadecomer.com/uploads/images/logos/logo-applebees.png" },
+                            { name: "Burger King", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Burger_King_Logo.svg/2000px-Burger_King_Logo.svg.png"}, { name: "Chick-fil-A", logo: "http://vignette4.wikia.nocookie.net/logopedia/images/6/68/Chick-fil-A_logo_2012.png/revision/latest?cb=20130511041847"}, 
+                            { name: "Chipotle", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/3/3b/Chipotle_Mexican_Grill_logo.svg/480px-Chipotle_Mexican_Grill_logo.svg.png"}, 
+                            {name: "Dairy Queen", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Dairy_Queen_logo.svg/1280px-Dairy_Queen_logo.svg.png"}, {name: "Five Guys", logo: "http://logos-download.com/wp-content/uploads/2016/04/Five_Guys_logo_logotype_burgers_and_fries.png"},
+                            {name: "Hardee's", logo: "http://www.reach-holding.com/resources/hardees.png"},
+                            {name: "Carl's", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/0/07/Carl%27s_Jr._Signage.svg/546px-Carl%27s_Jr._Signage.svg.png"}, {name: "In-N-Out", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/InNOut.svg/1200px-InNOut.svg.png" },
+                            {name: "KFC", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/b/bf/KFC_logo.svg/1024px-KFC_logo.svg.png" },
+                            {name: "McDonald's", logo:"http://diylogodesigns.com/blog/wp-content/uploads/2016/04/Mcdonalds-logo-png-Transparent.png"},
+                            {name: "Papa John's", logo:"http://logos-download.com/wp-content/uploads/2016/04/Papa_Johns_logo_logotype.png"},
+                            {name: "Starbucks", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/3/35/Starbucks_Coffee_Logo.svg/1024px-Starbucks_Coffee_Logo.svg.png"},
+                            {name: "Wendy's", logo:"http://www.creginc.com/images/tenants/Wendys-logo.png"}, 
+                            {name:"White Castle", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/e/e1/White_Castle_logo.svg/1197px-White_Castle_logo.svg.png"},
+                            {name:"Subway", logo:"http://logos-download.com/wp-content/uploads/2016/03/Subway_logo_logotype_emblem.png"}];
+           
+            d3.queue()
+                .defer(d3.csv, "price1.csv")
+                .defer(d3.csv, "calories.csv")
+                .defer(d3.csv, "FastFood.csv")
+                .await(function (err, price, calories, income) {
+                
+                //processing information about price   
+                    priceData = d3.nest()
+                        .key(function(d) { return d.FastFood;})
+                        .rollup(function(price) {
+                            return {
+                            "averagePrice" : d3.mean(price, function(d) {return(d.Price)}) // Return the average score 
+                        }
+                })
+                    .entries(price);
+                
+                    for(var i = 0; i < priceData.length; i++){
+                
+                        var n = Object.values(priceData[i].value)
+                        var x = Number(n);
+
+                        var calorieInfo = { fastfood : priceData[i].key,
+                                            cost: x
+                                          }
+
+                        P.push(calorieInfo);
+                    }
+                    
+                //processing info from calories.csv
+                    caloriesData = d3.nest()
+                        .key(function(d) { return d.Fastfood;})
+                        .rollup(function(calories) {
+                        return {
+                            "averageCalories" : d3.mean(calories, function(d) {return(d.Calories)}) // Return the average score 
+                            }
+                    })
+                        .entries(calories);
+                
+                for(var i = 0; i < caloriesData.length; i++){
+                
+                        var n = Object.values(caloriesData[i].value)
+                        var x = Number(n);
+
+                        var calorieInfo = { fastfood : caloriesData[i].key,
+                                            kcal: x
+                                          }
+
+                        C.push(calorieInfo);
+                    }
+                
+                
+                for(var i = 0; i < income.length; i++){
+                
+                    var info = { fastfood : income[i].fastfood,
+                                income : income[i].SYSTEMWIDESALES
+                               }
+                    I.push(info)
+
+                }
+                
+                //merging arrays created by processing the three csv files.
+                
+                for (var i1 = 0; i1 < C.length; i1++) 
+                {
+                    for (var i2 = 0; i2 < P.length; i2++) 
+                    {
+
+                        if (C[i1].fastfood == P[i2].fastfood)
+                        {
+                        
+                            if (C[i1].fastfood == imageRef[i2].name)
+                            {
+                                
+                                var info = {
+                                    fastfood : C[i1].fastfood, 
+                                    calories : C[i1].kcal, 
+                                    avgPrice : P[i2].cost, 
+                                    logo : imageRef[i2].logo
+                                    }
+                           
+                            merged.push(info);
+                            }
+                        }
+                    }
+                }
+          
+            
+                for (var x = 0; x < merged.length; x++){
+
+                    for ( var y = 0; y < I.length; y++){
+                    
+                        if (merged[x].fastfood == I[y].fastfood){
+                        
+                            var i = Number(I[y].income);
+                            merged[x].income = i;
+                        }
+                    }
+                }
+                
+                scatterPlot(merged);
+            });
+            
+            
+
+            var y = d3.scaleLinear()
+                .domain([0, 850])
+                .range([600, 0]);
+            
+            var caloriesAxis = d3.axisLeft(y);
+            
+            var x = d3.scaleLinear()
+                .domain([0, 9])
+                .range([0, 700]);
+            
+           
+            var priceAxis = d3.axisBottom(x);
+            
+            // x-axis
+              svg.append("g")
+                  .attr("class", "Xaxis")
+                  .attr("transform", "translate("+margin.left+",600 )")
+                  .call(priceAxis);
+
+            // y-axis
+              svg.append("g")
+                  .attr("class", "Yaxis")
+                  .attr("transform", "translate("+margin.left+", 0)")
+//                  .style(")
+                  .call(caloriesAxis);
+                        
+//            var mealGirls = svg.append("rect")
+//                    .attr("x", margin.left)
+//                    .attr("y", y(666.6))
+//                    .attr("width", 700)
+//                    .attr("height", 472)
+//                    .style("fill", fill="pink")
+//                    .style("opacity", opacity="0.6");
+//            
+//            var mealBoys = svg.append("rect")
+//                    .attr("x", margin.left)
+//                    .attr("y", y(833))
+//                    .attr("width", 700)
+//                    .attr("height", 590)
+//                    .style("fill", fill="blue")
+//                    .style("opacity", opacity="0.2");
+            
+            function scatterPlot(merged){
+                
+            var points = svg.selectAll(".dot")
+                .data(merged)
+                .enter().append("circle")
+                .attr("class", "dot")
+                .attr("r", function(d){ return (d.income / 35447)*100})
+                .attr("cx", function(d){ return x(d.avgPrice) })
+                .attr("cy", function(d){ return y(d.calories) })
+                .style("fill", fill = "darkblue")
+                .style("opacity", opacity = "0.8");
+             
+            
+            var images = svg.append("g").selectAll('points')
+                    .data(merged)
+                    .enter().append('image')
+                    .attr("xlink:href", function(d){ return d.logo })
+                    .attr("x", function(d){ return x(d.avgPrice) })
+                    .attr("y", function(d){ return y(d.calories) })
+                    .attr("width", 60)
+                    .attr("height", 60);
+                
+            
+            }
+            
+                       
+                
+             scatterPlot();    
+       
+            
+        </script>
+    </body>
+</html>
